@@ -1,4 +1,4 @@
-"""Coordinators for the SAJ H1 MQTT integration."""
+"""Coordinators for the SAJ R5 MQTT integration."""
 
 from __future__ import annotations
 
@@ -9,33 +9,25 @@ from datetime import timedelta
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .client import SajH1MqttClient
+from .client import SajR5MqttClient
 from .const import DOMAIN, LOGGER
 from .utils import log_hex
 
 
 @dataclass
-class SajH1MqttData:
-    """SAJ H1 MQTT data."""
+class SajR5MqttData:
+    """SAJ R5 MQTT data."""
 
-    mqtt_client: SajH1MqttClient
-    coordinator_realtime_data: SajH1MqttRealtimeDataCoordinator
-    coordinator_inverter_data: SajH1MqttInverterDataCoordinator | None
-    coordinator_battery_data: SajH1MqttBatteryDataCoordinator | None
-    coordinator_battery_controller_data: (
-        SajH1MqttBatteryControllerDataCoordinator | None
-    )
-    coordinator_config_data: SajH1MqttConfigDataCoordinator | None
+    mqtt_client: SajR5MqttClient
+    coordinator_realtime_data: SajR5MqttRealtimeDataCoordinator
+    coordinator_inverter_data: SajR5MqttInverterDataCoordinator | None
+    coordinator_config_data: SajR5MqttConfigDataCoordinator | None
 
     def mark_coordinators_ready(self) -> None:
         """Mark all coordinators ready."""
         self.coordinator_realtime_data.ready = True
         if self.coordinator_inverter_data:
             self.coordinator_inverter_data.ready = True
-        if self.coordinator_battery_data:
-            self.coordinator_battery_data.ready = True
-        if self.coordinator_battery_controller_data:
-            self.coordinator_battery_controller_data.ready = True
         if self.coordinator_config_data:
             self.coordinator_config_data.ready = True
 
@@ -44,10 +36,6 @@ class SajH1MqttData:
         await self.coordinator_realtime_data.async_refresh()
         if self.coordinator_inverter_data:
             await self.coordinator_inverter_data.async_refresh()
-        if self.coordinator_battery_data:
-            await self.coordinator_battery_data.async_refresh()
-        if self.coordinator_battery_controller_data:
-            await self.coordinator_battery_controller_data.async_refresh()
         if self.coordinator_config_data:
             await self.coordinator_config_data.async_refresh()
 
@@ -58,17 +46,17 @@ class SajH1MqttData:
         await self.async_refresh_coordinators()
 
 
-class SajH1MqttDataCoordinator(DataUpdateCoordinator, ABC):
-    """SAJ H1 MQTT data coordinator."""
+class SajR5MqttDataCoordinator(DataUpdateCoordinator, ABC):
+    """SAJ R5 MQTT data coordinator."""
 
     def __init__(
         self,
         hass: HomeAssistant,
-        mqtt_client: SajH1MqttClient,
+        mqtt_client: SajR5MqttClient,
         scan_interval: timedelta,
         name: str,
     ) -> None:
-        """Set up the SajH1MqttDataCoordinator class."""
+        """Set up the SajR5MqttDataCoordinator class."""
         super().__init__(
             hass,
             LOGGER,
@@ -92,65 +80,39 @@ class SajH1MqttDataCoordinator(DataUpdateCoordinator, ABC):
         return await self._async_fetch_data()
 
 
-class SajH1MqttRealtimeDataCoordinator(SajH1MqttDataCoordinator):
-    """SAJ H1 MQTT realtime data coordinator."""
+class SajR5MqttRealtimeDataCoordinator(SajR5MqttDataCoordinator):
+    """SAJ R5 MQTT realtime data coordinator."""
 
     async def _async_fetch_data(self) -> bytearray | None:
         """Fetch the realtime data."""
-        reg_start = 0x4000
-        reg_count = 0x100  # 256 registers
+        reg_start = 0x0100
+        reg_count = 0x38  # 56 registers (0x0100-0x0137)
         LOGGER.debug(
             f"Fetching realtime data at {log_hex(reg_start)}, length: {log_hex(reg_count)}"
         )
         return await self.mqtt_client.read_registers(reg_start, reg_count)
 
 
-class SajH1MqttInverterDataCoordinator(SajH1MqttDataCoordinator):
-    """SAJ H1 MQTT inverter data coordinator."""
+class SajR5MqttInverterDataCoordinator(SajR5MqttDataCoordinator):
+    """SAJ R5 MQTT inverter data coordinator."""
 
     async def _async_fetch_data(self) -> bytearray | None:
         """Fetch the inverter data."""
         reg_start = 0x8F00
-        reg_count = 0x1E  # 30 registers
+        reg_count = 0x1D  # 29 registers (0x8F00-0x8F1C, removed BatNum)
         LOGGER.debug(
             f"Fetching inverter data at {log_hex(reg_start)}, length: {log_hex(reg_count)}"
         )
         return await self.mqtt_client.read_registers(reg_start, reg_count)
 
 
-class SajH1MqttBatteryDataCoordinator(SajH1MqttDataCoordinator):
-    """SAJ H1 MQTT battery data coordinator."""
-
-    async def _async_fetch_data(self) -> bytearray | None:
-        """Fetch the battery bata."""
-        reg_start = 0x8E00
-        reg_count = 0x50  # 80 registers
-        LOGGER.debug(
-            f"Fetching battery data at {log_hex(reg_start)}, length: {log_hex(reg_count)}"
-        )
-        return await self.mqtt_client.read_registers(reg_start, reg_count)
-
-
-class SajH1MqttBatteryControllerDataCoordinator(SajH1MqttDataCoordinator):
-    """SAJ H1 MQTT battery controller data coordinator."""
-
-    async def _async_fetch_data(self) -> bytearray | None:
-        """Fetch the battery controller data."""
-        reg_start = 0xA000
-        reg_count = 0x24  # 36 registers
-        LOGGER.debug(
-            f"Fetching battery controller data at {log_hex(reg_start)}, length: {log_hex(reg_count)}"
-        )
-        return await self.mqtt_client.read_registers(reg_start, reg_count)
-
-
-class SajH1MqttConfigDataCoordinator(SajH1MqttDataCoordinator):
-    """SAJ H1 MQTT config data coordinator."""
+class SajR5MqttConfigDataCoordinator(SajR5MqttDataCoordinator):
+    """SAJ R5 MQTT config data coordinator."""
 
     async def _async_fetch_data(self) -> bytearray | None:
         """Fetch the config data."""
-        reg_start = 0x3247
-        reg_count = 0x2E  # 46 registers
+        reg_start = 0x801F
+        reg_count = 0x5  # 5 registers (0x801F-0x8023: power limit + time)
         LOGGER.debug(
             f"Fetching config data at {log_hex(reg_start)}, length: {log_hex(reg_count)}"
         )

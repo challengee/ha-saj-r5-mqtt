@@ -1,4 +1,4 @@
-"""Base entity for the SAJ H1 MQTT integration."""
+"""Base entity for the SAJ R5 MQTT integration."""
 
 from __future__ import annotations
 
@@ -21,12 +21,12 @@ from .const import (
     MODEL,
     MODEL_SHORT,
 )
-from .coordinator import SajH1MqttDataCoordinator
+from .coordinator import SajR5MqttDataCoordinator
 
 
 @dataclass(frozen=True, kw_only=True)
-class SajH1MqttEntityDescription(EntityDescription):
-    """A class that describes SAJ H1 MQTT entities."""
+class SajR5MqttEntityDescription(EntityDescription):
+    """A class that describes SAJ R5 MQTT entities."""
 
     # Modbus register details for reading from coordinator
     modbus_register_offset: int
@@ -36,22 +36,22 @@ class SajH1MqttEntityDescription(EntityDescription):
     value_fn: Callable[[int | float | str | None], int | float | str | None] | None
 
 
-class SajH1MqttEntity(CoordinatorEntity[SajH1MqttDataCoordinator], Entity, ABC):
-    """SAJ H1 MQTT entity.
+class SajR5MqttEntity(CoordinatorEntity[SajR5MqttDataCoordinator], Entity, ABC):
+    """SAJ R5 MQTT entity.
 
     This is the base abstract class for all entity classes.
     """
 
     def __init__(
         self,
-        coordinator: SajH1MqttDataCoordinator,
-        description: SajH1MqttEntityDescription | None = None,
+        coordinator: SajR5MqttDataCoordinator,
+        description: SajR5MqttEntityDescription | None = None,
     ) -> None:
         """Initialize the entity."""
         super().__init__(coordinator)
 
         # Do not remove this assignment, used internally in hass
-        self.entity_description: SajH1MqttEntityDescription = description
+        self.entity_description: SajR5MqttEntityDescription = description
 
         # Copy values from entity description
         self._offset = description.modbus_register_offset
@@ -156,7 +156,7 @@ class SajH1MqttEntity(CoordinatorEntity[SajH1MqttDataCoordinator], Entity, ABC):
         pass
 
 
-def get_entity_description(
+def get_entity_description_by_key(
     descriptions: tuple[EntityDescription], key: str
 ) -> EntityDescription | None:
     """Get an entity description by its 'key' from a tuple of entity descriptions."""
@@ -167,3 +167,45 @@ def get_entity_description(
     if description is None:
         raise ValueError(f"Invalid entity description key: {key}")
     return description
+
+
+def get_entity_description(
+    payload: bytearray, description: SajR5MqttEntityDescription
+) -> int | float | str | None:
+    """Extract and parse a value from payload based on entity description."""
+    if payload is None:
+        return None
+
+    value: int | float | str | None = None
+    try:
+        # Get raw sensor value
+        if description.modbus_register_data_type.endswith("s"):
+            # String type (e.g., "20s")
+            reg_length = int(description.modbus_register_data_type.replace("s", ""))
+            value = payload[description.modbus_register_offset : description.modbus_register_offset + reg_length]
+            if isinstance(value, (bytes, bytearray)):
+                value = value.decode("ascii", errors="ignore").rstrip("\x00")
+        else:
+            # Numeric type
+            (value,) = unpack_from(
+                description.modbus_register_data_type,
+                payload,
+                description.modbus_register_offset,
+            )
+
+        # Apply scale if present
+        if description.modbus_register_scale is not None:
+            digits = max(0, str(description.modbus_register_scale)[::-1].find("."))
+            value = round(value * float(description.modbus_register_scale), digits)
+            if isinstance(description.modbus_register_scale, str):
+                value = "{:.{precision}f}".format(value, precision=digits)
+
+        # Apply value conversion function if present
+        if description.value_fn:
+            value = description.value_fn(value)
+
+    except Exception as e:
+        LOGGER.error(f"Unable to get value for {description.key}: {e}")
+        return None
+
+    return value

@@ -1,4 +1,4 @@
-"""The SAJ H1 MQTT integration."""
+"""The SAJ R5 MQTT integration."""
 
 from __future__ import annotations
 
@@ -9,11 +9,9 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from .client import SajH1MqttClient
+from .client import SajR5MqttClient
 from .const import (
     CONF_ENABLE_MQTT_DEBUG,
-    CONF_SCAN_INTERVAL_BATTERY_CONTROLLER_DATA,
-    CONF_SCAN_INTERVAL_BATTERY_DATA,
     CONF_SCAN_INTERVAL_CONFIG_DATA,
     CONF_SCAN_INTERVAL_INVERTER_DATA,
     CONF_SCAN_INTERVAL_REALTIME_DATA,
@@ -23,20 +21,18 @@ from .const import (
     MQTT_READY,
 )
 from .coordinator import (
-    SajH1MqttBatteryControllerDataCoordinator,
-    SajH1MqttBatteryDataCoordinator,
-    SajH1MqttConfigDataCoordinator,
-    SajH1MqttData,
-    SajH1MqttInverterDataCoordinator,
-    SajH1MqttRealtimeDataCoordinator,
+    SajR5MqttConfigDataCoordinator,
+    SajR5MqttData,
+    SajR5MqttInverterDataCoordinator,
+    SajR5MqttRealtimeDataCoordinator,
 )
 from .services import async_register_services, async_remove_services
-from .types import SajH1MqttConfigEntry
+from .types import SajR5MqttConfigEntry
 
-PLATFORMS: list[Platform] = [Platform.NUMBER, Platform.SELECT, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: SajH1MqttConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: SajR5MqttConfigEntry) -> bool:
     """Set up a config entry."""
     # Make sure MQTT integration is enabled and the client is available
     if not await mqtt.async_wait_for_mqtt_client(hass):
@@ -55,81 +51,48 @@ async def async_setup_entry(hass: HomeAssistant, entry: SajH1MqttConfigEntry) ->
     # Get optional data
     interval = entry.options.get(CONF_SCAN_INTERVAL_INVERTER_DATA, None)
     scan_interval_inverter_data = timedelta(seconds=interval) if interval else None
-    interval = entry.options.get(CONF_SCAN_INTERVAL_BATTERY_DATA, None)
-    scan_interval_battery_data = timedelta(seconds=interval) if interval else None
-    interval = entry.options.get(CONF_SCAN_INTERVAL_BATTERY_CONTROLLER_DATA, None)
-    scan_interval_battery_controller_data = (
-        timedelta(seconds=interval) if interval else None
-    )
     interval = entry.options.get(CONF_SCAN_INTERVAL_CONFIG_DATA, None)
     scan_interval_config_data = timedelta(seconds=interval) if interval else None
     debug_mqtt: bool = entry.options.get(CONF_ENABLE_MQTT_DEBUG, False)
 
-    LOGGER.info(f"Setting up SAJ H1 inverter with serial: {serial_number}")
+    LOGGER.info(f"Setting up SAJ R5 inverter with serial: {serial_number}")
     LOGGER.info(f"Scan interval realtime data: {scan_interval_realtime_data}")
     LOGGER.info(
         f"Scan interval inverter data: {scan_interval_inverter_data or 'disabled'}"
     )
-    LOGGER.info(
-        f"Scan interval battery data: {scan_interval_battery_data or 'disabled'}"
-    )
-    LOGGER.info(
-        f"Scan interval controller data: {scan_interval_battery_controller_data or 'disabled'}"
-    )
     LOGGER.info(f"Scan interval config data: {scan_interval_config_data or 'disabled'}")
 
     # Setup mqtt client
-    mqtt_client = SajH1MqttClient(hass, serial_number, debug_mqtt)
+    mqtt_client = SajR5MqttClient(hass, serial_number, debug_mqtt)
     await mqtt_client.connect()
 
     # Setup coordinators
     LOGGER.debug("Setting up coordinators")
 
     # Realtime data coordinator
-    coordinator_realtime_data = SajH1MqttRealtimeDataCoordinator(
+    coordinator_realtime_data = SajR5MqttRealtimeDataCoordinator(
         hass, mqtt_client, scan_interval_realtime_data, "realtime_data"
     )
 
     # Inverter data coordinators
-    coordinator_inverter_data: SajH1MqttInverterDataCoordinator | None = None
+    coordinator_inverter_data: SajR5MqttInverterDataCoordinator | None = None
     if scan_interval_inverter_data:
-        coordinator_inverter_data = SajH1MqttInverterDataCoordinator(
+        coordinator_inverter_data = SajR5MqttInverterDataCoordinator(
             hass, mqtt_client, scan_interval_inverter_data, "inverter_data"
         )
 
-    # Battery data coordinator
-    coordinator_battery_data: SajH1MqttBatteryDataCoordinator | None = None
-    if scan_interval_battery_data:
-        coordinator_battery_data = SajH1MqttBatteryDataCoordinator(
-            hass, mqtt_client, scan_interval_battery_data, "battery_data"
-        )
-
-    # Battery controller data coordinators
-    coordinator_battery_controller_data: (
-        SajH1MqttBatteryControllerDataCoordinator | None
-    ) = None
-    if scan_interval_battery_controller_data:
-        coordinator_battery_controller_data = SajH1MqttBatteryControllerDataCoordinator(
-            hass,
-            mqtt_client,
-            scan_interval_battery_controller_data,
-            "battery_controller_data",
-        )
-
     # Config data coordinator
-    coordinator_config_data: SajH1MqttConfigDataCoordinator | None = None
+    coordinator_config_data: SajR5MqttConfigDataCoordinator | None = None
     if scan_interval_config_data:
-        coordinator_config_data = SajH1MqttConfigDataCoordinator(
+        coordinator_config_data = SajR5MqttConfigDataCoordinator(
             hass, mqtt_client, scan_interval_config_data, "config_data"
         )
 
     # Entry runtime data
-    entry.runtime_data = SajH1MqttData(
+    entry.runtime_data = SajR5MqttData(
         mqtt_client=mqtt_client,
         coordinator_realtime_data=coordinator_realtime_data,
         coordinator_inverter_data=coordinator_inverter_data,
-        coordinator_battery_data=coordinator_battery_data,
-        coordinator_battery_controller_data=coordinator_battery_controller_data,
         coordinator_config_data=coordinator_config_data,
     )
 
@@ -153,12 +116,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: SajH1MqttConfigEntry) ->
     return True
 
 
-async def async_reload_entry(hass: HomeAssistant, entry: SajH1MqttConfigEntry) -> None:
+async def async_reload_entry(hass: HomeAssistant, entry: SajR5MqttConfigEntry) -> None:
     """Reload a config entry when it changed."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: SajH1MqttConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: SajR5MqttConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
@@ -170,7 +133,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: SajH1MqttConfigEntry) -
 
 
 async def async_first_refresh_on_mqtt_birth_message(
-    hass: HomeAssistant, entry: SajH1MqttConfigEntry
+    hass: HomeAssistant, entry: SajR5MqttConfigEntry
 ) -> None:
     """Wait for mqtt birth message before triggering initial refresh.
 

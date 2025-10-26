@@ -1,4 +1,4 @@
-"""Utility functions for the SAJ H1 MQTT integration."""
+"""Utility functions for the SAJ R5 MQTT integration."""
 
 from .const import LOGGER
 

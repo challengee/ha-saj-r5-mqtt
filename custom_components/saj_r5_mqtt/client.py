@@ -1,4 +1,4 @@
-"""Client for the SAJ H1 MQTT integration."""
+"""Client for the SAJ R5 MQTT integration."""
 
 from __future__ import annotations
 
@@ -31,13 +31,13 @@ from .const import (
 from .utils import computeCRC, debug, log_hex
 
 
-class SajH1MqttClient:
-    """SAJ H1 MQTT client instance."""
+class SajR5MqttClient:
+    """SAJ R5 MQTT client instance."""
 
     def __init__(
         self, hass: HomeAssistant, serial_number: str, debug_mqtt: bool
     ) -> None:
-        """Set up the SajH1MqttClient class."""
+        """Set up the SajR5MqttClient class."""
         super().__init__()
 
         self.hass = hass

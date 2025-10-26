@@ -1,4 +1,4 @@
-# Describes the format for available saj_mqtt services
+# Describes the format for available saj_r5_mqtt services
 
 # Read a register value from the inverter
 read_register:
@@ -6,15 +6,15 @@ read_register:
   fields:
     config_entry:
       name: Device
-      description: SAJ H1 solar inverter, defaults to the first configured device if not specified
+      description: SAJ R5 solar inverter, defaults to the first configured device if not specified
       required: false
       selector:
         config_entry:
-          integration: saj_h1_mqtt
+          integration: saj_r5_mqtt
     register:
       name: Register
       description: The register address in hex or decimal format
-      example: "0x3247 (hex) or 12871 (decimal)"
+      example: "0x0100 (hex) or 256 (decimal)"
       required: true
       selector:
         text:
@@ -39,22 +39,22 @@ write_register:
   fields:
     config_entry:
       name: Device
-      description: SAJ H1 solar inverter, defaults to the first configured device if not specified
+      description: SAJ R5 solar inverter, defaults to the first configured device if not specified
       required: false
       selector:
         config_entry:
-          integration: saj_h1_mqtt
+          integration: saj_r5_mqtt
     register:
       name: Register
       description: The register address in hex or decimal format
-      example: "0x3247 (hex) or 12871 (decimal)"
+      example: "0x801F (hex) or 32799 (decimal)"
       required: true
       selector:
         text:
     register_value:
       name: Register value
       description: The register value in hex or decimal format
-      example: "0x1 (hex) or 1 (decimal)"
+      example: "0x64 (hex) or 100 (decimal)"
       required: true
       selector:
         text:
@@ -65,35 +65,11 @@ refresh_inverter_data:
   fields:
     config_entry:
       name: Device
-      description: SAJ H1 solar inverter, defaults to the first configured device if not specified
+      description: SAJ R5 solar inverter, defaults to the first configured device if not specified
       required: false
       selector:
         config_entry:
-          integration: saj_h1_mqtt
-
-# Refresh the battery data sensors
-refresh_battery_data:
-  description: Refresh the battery data sensors
-  fields:
-    config_entry:
-      name: Device
-      description: SAJ H1 solar inverter, defaults to the first configured device if not specified
-      required: false
-      selector:
-        config_entry:
-          integration: saj_h1_mqtt
-
-# Refresh the battery controller data sensors
-refresh_battery_controller_data:
-  description: Refresh the battery controller data sensors
-  fields:
-    config_entry:
-      name: Device
-      description: SAJ H1 solar inverter, defaults to the first configured device if not specified
-      required: false
-      selector:
-        config_entry:
-          integration: saj_h1_mqtt
+          integration: saj_r5_mqtt
 
 # Refresh the config data sensors
 refresh_config_data:
@@ -101,8 +77,8 @@ refresh_config_data:
   fields:
     config_entry:
       name: Device
-      description: SAJ H1 solar inverter, defaults to the first configured device if not specified
+      description: SAJ R5 solar inverter, defaults to the first configured device if not specified
       required: false
       selector:
         config_entry:
-          integration: saj_h1_mqtt
+          integration: saj_r5_mqtt

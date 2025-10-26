@@ -1,4 +1,4 @@
-"""Services for the SAJ H1 MQTT integration."""
+"""Services for the SAJ R5 MQTT integration."""
 
 from __future__ import annotations
 
@@ -22,17 +22,15 @@ from .const import (
     DOMAIN,
     LOGGER,
     SERVICE_READ_REGISTER,
-    SERVICE_REFRESH_BATTERY_CONTROLLER_DATA,
-    SERVICE_REFRESH_BATTERY_DATA,
     SERVICE_REFRESH_CONFIG_DATA,
     SERVICE_REFRESH_INVERTER_DATA,
     SERVICE_WRITE_REGISTER,
 )
-from .types import SajH1MqttConfigEntry
+from .types import SajR5MqttConfigEntry
 
 
 def async_register_services(hass: HomeAssistant) -> None:
-    """Register services for SAJ H1 MQTT integration."""
+    """Register services for SAJ R5 MQTT integration."""
 
     async def read_register(call: ServiceCall) -> core.ServiceResponse:
         LOGGER.debug("Reading register")
@@ -153,44 +151,6 @@ def async_register_services(hass: HomeAssistant) -> None:
             ),
         )
 
-    async def refresh_battery_data(call: ServiceCall) -> None:
-        # Only refresh when coordinator is enabled
-        entry = _get_config_entry(hass, call.data.get(ATTR_CONFIG_ENTRY, None))
-        coordinator = entry.runtime_data.coordinator_battery_data
-        if coordinator:
-            LOGGER.debug("Refreshing battery data")
-            await coordinator.async_request_refresh()
-
-    if not hass.services.has_service(DOMAIN, SERVICE_REFRESH_BATTERY_DATA):
-        LOGGER.debug(f"Registering service: {SERVICE_REFRESH_BATTERY_DATA}")
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_REFRESH_BATTERY_DATA,
-            refresh_battery_data,
-            schema=vol.Schema(
-                vol.All({vol.Optional(ATTR_CONFIG_ENTRY): ConfigEntrySelector()})
-            ),
-        )
-
-    async def refresh_battery_controller_data(call: ServiceCall) -> None:
-        # Only refresh when coordinator is enabled
-        entry = _get_config_entry(hass, call.data[ATTR_CONFIG_ENTRY])
-        coordinator = entry.runtime_data.coordinator_battery_controller_data
-        if coordinator:
-            LOGGER.debug("Refreshing battery controller data")
-            await coordinator.async_request_refresh()
-
-    if not hass.services.has_service(DOMAIN, SERVICE_REFRESH_BATTERY_CONTROLLER_DATA):
-        LOGGER.debug(f"Registering service: {SERVICE_REFRESH_BATTERY_CONTROLLER_DATA}")
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_REFRESH_BATTERY_CONTROLLER_DATA,
-            refresh_battery_controller_data,
-            schema=vol.Schema(
-                vol.All({vol.Optional(ATTR_CONFIG_ENTRY): ConfigEntrySelector()})
-            ),
-        )
-
     async def refresh_config_data(call: ServiceCall) -> None:
         # Only refresh when coordinator is enabled
         entry = _get_config_entry(hass, call.data.get(ATTR_CONFIG_ENTRY, None))
@@ -216,14 +176,12 @@ def async_remove_services(hass: HomeAssistant) -> None:
     hass.services.async_remove(DOMAIN, SERVICE_READ_REGISTER)
     hass.services.async_remove(DOMAIN, SERVICE_WRITE_REGISTER)
     hass.services.async_remove(DOMAIN, SERVICE_REFRESH_INVERTER_DATA)
-    hass.services.async_remove(DOMAIN, SERVICE_REFRESH_BATTERY_DATA)
-    hass.services.async_remove(DOMAIN, SERVICE_REFRESH_BATTERY_CONTROLLER_DATA)
     hass.services.async_remove(DOMAIN, SERVICE_REFRESH_CONFIG_DATA)
 
 
 def _get_config_entry(
     hass: HomeAssistant, entry_id: str | None = None
-) -> SajH1MqttConfigEntry:
+) -> SajR5MqttConfigEntry:
     """Return the config entry or raise error if not found or not loaded."""
     # Get the specified config entry, or fallback to first one if not specified
     if not (entry := hass.config_entries.async_get_entry(entry_id)):

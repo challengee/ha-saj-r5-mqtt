@@ -1,4 +1,4 @@
-"""Config flow for the SAJ H1 MQTT integration."""
+"""Config flow for the SAJ R5 MQTT integration."""
 
 from __future__ import annotations
 
@@ -26,8 +26,6 @@ from .const import (
     CONF_ENABLE_ACCURATE_REALTIME_POWER_DATA,
     CONF_ENABLE_MQTT_DEBUG,
     CONF_ENABLE_SERIAL_NUMBER_PREFIX,
-    CONF_SCAN_INTERVAL_BATTERY_CONTROLLER_DATA,
-    CONF_SCAN_INTERVAL_BATTERY_DATA,
     CONF_SCAN_INTERVAL_CONFIG_DATA,
     CONF_SCAN_INTERVAL_INVERTER_DATA,
     CONF_SCAN_INTERVAL_REALTIME_DATA,
@@ -72,28 +70,6 @@ OPTIONS_SCHEMA = vol.Schema(
         ),
         vol.Optional(
             CONF_SCAN_INTERVAL_INVERTER_DATA,
-            default=0,
-        ): NumberSelector(
-            NumberSelectorConfig(
-                min=0,
-                step=10,
-                mode=NumberSelectorMode.BOX,
-                unit_of_measurement="seconds",
-            )
-        ),
-        vol.Optional(
-            CONF_SCAN_INTERVAL_BATTERY_DATA,
-            default=0,
-        ): NumberSelector(
-            NumberSelectorConfig(
-                min=0,
-                step=10,
-                mode=NumberSelectorMode.BOX,
-                unit_of_measurement="seconds",
-            )
-        ),
-        vol.Optional(
-            CONF_SCAN_INTERVAL_BATTERY_CONTROLLER_DATA,
             default=0,
         ): NumberSelector(
             NumberSelectorConfig(
