@@ -12,7 +12,6 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from .client import SajR5MqttClient
 from .const import (
     CONF_ENABLE_MQTT_DEBUG,
-    CONF_SCAN_INTERVAL_CONFIG_DATA,
     CONF_SCAN_INTERVAL_INVERTER_DATA,
     CONF_SCAN_INTERVAL_REALTIME_DATA,
     CONF_SERIAL_NUMBER,
@@ -21,7 +20,6 @@ from .const import (
     MQTT_READY,
 )
 from .coordinator import (
-    SajR5MqttConfigDataCoordinator,
     SajR5MqttData,
     SajR5MqttInverterDataCoordinator,
     SajR5MqttRealtimeDataCoordinator,
@@ -51,8 +49,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: SajR5MqttConfigEntry) ->
     # Get optional data
     interval = entry.options.get(CONF_SCAN_INTERVAL_INVERTER_DATA, None)
     scan_interval_inverter_data = timedelta(seconds=interval) if interval else None
-    interval = entry.options.get(CONF_SCAN_INTERVAL_CONFIG_DATA, None)
-    scan_interval_config_data = timedelta(seconds=interval) if interval else None
     debug_mqtt: bool = entry.options.get(CONF_ENABLE_MQTT_DEBUG, False)
 
     LOGGER.info(f"Setting up SAJ R5 inverter with serial: {serial_number}")
@@ -60,7 +56,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: SajR5MqttConfigEntry) ->
     LOGGER.info(
         f"Scan interval inverter data: {scan_interval_inverter_data or 'disabled'}"
     )
-    LOGGER.info(f"Scan interval config data: {scan_interval_config_data or 'disabled'}")
 
     # Setup mqtt client
     mqtt_client = SajR5MqttClient(hass, serial_number, debug_mqtt)
@@ -81,19 +76,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: SajR5MqttConfigEntry) ->
             hass, mqtt_client, scan_interval_inverter_data, "inverter_data"
         )
 
-    # Config data coordinator
-    coordinator_config_data: SajR5MqttConfigDataCoordinator | None = None
-    if scan_interval_config_data:
-        coordinator_config_data = SajR5MqttConfigDataCoordinator(
-            hass, mqtt_client, scan_interval_config_data, "config_data"
-        )
-
     # Entry runtime data
     entry.runtime_data = SajR5MqttData(
         mqtt_client=mqtt_client,
         coordinator_realtime_data=coordinator_realtime_data,
         coordinator_inverter_data=coordinator_inverter_data,
-        coordinator_config_data=coordinator_config_data,
     )
 
     # Trigger first refresh

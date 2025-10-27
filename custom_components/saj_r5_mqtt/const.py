@@ -22,7 +22,6 @@ DEVICE_TYPE_SUNTRIO_3PHASE_V2 = 0x0023  # Alternative three-phase variant (found
 CONF_SERIAL_NUMBER = "serial_number"
 CONF_SCAN_INTERVAL_REALTIME_DATA = "scan_interval_realtime_data"
 CONF_SCAN_INTERVAL_INVERTER_DATA = "scan_interval_inverter_data"
-CONF_SCAN_INTERVAL_CONFIG_DATA = "scan_interval_config_data"
 CONF_ENABLE_SERIAL_NUMBER_PREFIX = "enable_serial_number_prefix"
 CONF_ENABLE_ACCURATE_REALTIME_POWER_DATA = "enable_accurate_realtime_power_data"
 CONF_ENABLE_MQTT_DEBUG = "enable_mqtt_debug"
@@ -31,7 +30,6 @@ CONF_ENABLE_MQTT_DEBUG = "enable_mqtt_debug"
 SERVICE_READ_REGISTER = "read_register"
 SERVICE_WRITE_REGISTER = "write_register"
 SERVICE_REFRESH_INVERTER_DATA = "refresh_inverter_data"
-SERVICE_REFRESH_CONFIG_DATA = "refresh_config_data"
 
 # Attribute constants
 ATTR_CONFIG_ENTRY = "config_entry"

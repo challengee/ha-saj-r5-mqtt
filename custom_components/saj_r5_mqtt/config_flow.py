@@ -26,7 +26,6 @@ from .const import (
     CONF_ENABLE_ACCURATE_REALTIME_POWER_DATA,
     CONF_ENABLE_MQTT_DEBUG,
     CONF_ENABLE_SERIAL_NUMBER_PREFIX,
-    CONF_SCAN_INTERVAL_CONFIG_DATA,
     CONF_SCAN_INTERVAL_INVERTER_DATA,
     CONF_SCAN_INTERVAL_REALTIME_DATA,
     CONF_SERIAL_NUMBER,
@@ -70,17 +69,6 @@ OPTIONS_SCHEMA = vol.Schema(
         ),
         vol.Optional(
             CONF_SCAN_INTERVAL_INVERTER_DATA,
-            default=0,
-        ): NumberSelector(
-            NumberSelectorConfig(
-                min=0,
-                step=10,
-                mode=NumberSelectorMode.BOX,
-                unit_of_measurement="seconds",
-            )
-        ),
-        vol.Optional(
-            CONF_SCAN_INTERVAL_CONFIG_DATA,
             default=0,
         ): NumberSelector(
             NumberSelectorConfig(

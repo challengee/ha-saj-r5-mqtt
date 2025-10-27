@@ -22,7 +22,6 @@ from .const import (
     DOMAIN,
     LOGGER,
     SERVICE_READ_REGISTER,
-    SERVICE_REFRESH_CONFIG_DATA,
     SERVICE_REFRESH_INVERTER_DATA,
     SERVICE_WRITE_REGISTER,
 )
@@ -151,32 +150,12 @@ def async_register_services(hass: HomeAssistant) -> None:
             ),
         )
 
-    async def refresh_config_data(call: ServiceCall) -> None:
-        # Only refresh when coordinator is enabled
-        entry = _get_config_entry(hass, call.data.get(ATTR_CONFIG_ENTRY, None))
-        coordinator = entry.runtime_data.coordinator_config_data
-        if coordinator:
-            LOGGER.debug("Refreshing config data")
-            await coordinator.async_request_refresh()
-
-    if not hass.services.has_service(DOMAIN, SERVICE_REFRESH_CONFIG_DATA):
-        LOGGER.debug(f"Registering service: {SERVICE_REFRESH_CONFIG_DATA}")
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_REFRESH_CONFIG_DATA,
-            refresh_config_data,
-            schema=vol.Schema(
-                vol.All({vol.Optional(ATTR_CONFIG_ENTRY): ConfigEntrySelector()})
-            ),
-        )
-
 
 def async_remove_services(hass: HomeAssistant) -> None:
     """Remove all services."""
     hass.services.async_remove(DOMAIN, SERVICE_READ_REGISTER)
     hass.services.async_remove(DOMAIN, SERVICE_WRITE_REGISTER)
     hass.services.async_remove(DOMAIN, SERVICE_REFRESH_INVERTER_DATA)
-    hass.services.async_remove(DOMAIN, SERVICE_REFRESH_CONFIG_DATA)
 
 
 def _get_config_entry(

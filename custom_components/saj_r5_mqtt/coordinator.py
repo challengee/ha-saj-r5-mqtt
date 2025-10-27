@@ -21,23 +21,18 @@ class SajR5MqttData:
     mqtt_client: SajR5MqttClient
     coordinator_realtime_data: SajR5MqttRealtimeDataCoordinator
     coordinator_inverter_data: SajR5MqttInverterDataCoordinator | None
-    coordinator_config_data: SajR5MqttConfigDataCoordinator | None
 
     def mark_coordinators_ready(self) -> None:
         """Mark all coordinators ready."""
         self.coordinator_realtime_data.ready = True
         if self.coordinator_inverter_data:
             self.coordinator_inverter_data.ready = True
-        if self.coordinator_config_data:
-            self.coordinator_config_data.ready = True
 
     async def async_refresh_coordinators(self) -> None:
         """Refresh all coordinators."""
         await self.coordinator_realtime_data.async_refresh()
         if self.coordinator_inverter_data:
             await self.coordinator_inverter_data.async_refresh()
-        if self.coordinator_config_data:
-            await self.coordinator_config_data.async_refresh()
 
     async def async_first_refresh(self) -> None:
         """Trigger first refresh for all coordinators."""
@@ -102,18 +97,5 @@ class SajR5MqttInverterDataCoordinator(SajR5MqttDataCoordinator):
         reg_count = 0x1D  # 29 registers (0x8F00-0x8F1C, removed BatNum)
         LOGGER.debug(
             f"Fetching inverter data at {log_hex(reg_start)}, length: {log_hex(reg_count)}"
-        )
-        return await self.mqtt_client.read_registers(reg_start, reg_count)
-
-
-class SajR5MqttConfigDataCoordinator(SajR5MqttDataCoordinator):
-    """SAJ R5 MQTT config data coordinator."""
-
-    async def _async_fetch_data(self) -> bytearray | None:
-        """Fetch the config data."""
-        reg_start = 0x801F
-        reg_count = 0x5  # 5 registers (0x801F-0x8023: power limit + time)
-        LOGGER.debug(
-            f"Fetching config data at {log_hex(reg_start)}, length: {log_hex(reg_count)}"
         )
         return await self.mqtt_client.read_registers(reg_start, reg_count)

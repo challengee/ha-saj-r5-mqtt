@@ -167,12 +167,6 @@ SAJ_INVERTER_DATA_SENSOR_DESCRIPTIONS: tuple[SajR5MqttSensorEntityDescription, .
     SajR5MqttSensorEntityDescription(key="power_hardware_version", entity_registry_enabled_default=False, device_class=None, state_class=None, native_unit_of_measurement=None, modbus_register_offset=0x38, modbus_register_data_type=">H", modbus_register_scale=None, value_fn=lambda x: f"{(x >> 8) & 0xFF}.{x & 0xFF}"),
 )
 
-# Config data sensors (register range 0x801F-0x8023)
-SAJ_CONFIG_DATA_SENSOR_DESCRIPTIONS: tuple[SajR5MqttSensorEntityDescription, ...] = (
-    # Power Limit (0x801F)
-    SajR5MqttSensorEntityDescription(key="power_limit", entity_registry_enabled_default=True, device_class=None, state_class=SensorStateClass.MEASUREMENT, native_unit_of_measurement=PERCENTAGE, modbus_register_offset=0x0, modbus_register_data_type=">H", modbus_register_scale=None, value_fn=None),
-)
-
 # fmt: on
 
 
@@ -235,16 +229,6 @@ async def async_setup_entry(
             sensors.append(
                 SajR5MqttSensorEntity(
                     coordinator=saj_data.coordinator_inverter_data,
-                    description=description,
-                )
-            )
-
-    # Create config data sensors
-    if saj_data.coordinator_config_data:
-        for description in SAJ_CONFIG_DATA_SENSOR_DESCRIPTIONS:
-            sensors.append(
-                SajR5MqttSensorEntity(
-                    coordinator=saj_data.coordinator_config_data,
                     description=description,
                 )
             )
