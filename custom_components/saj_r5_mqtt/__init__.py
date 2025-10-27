@@ -27,7 +27,7 @@ from .coordinator import (
 from .services import async_register_services, async_remove_services
 from .types import SajR5MqttConfigEntry
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.NUMBER]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: SajR5MqttConfigEntry) -> bool:

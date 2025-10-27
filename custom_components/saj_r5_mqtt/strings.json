@@ -21,12 +21,18 @@
         "data": {
           "scan_interval_realtime_data": "Realtime data scan interval",
           "scan_interval_inverter_data": "Inverter data scan interval (0=disabled)",
-          "scan_interval_config_data": "Config data scan interval (0=disabled)",
           "enable_serial_number_prefix": "Include serial number in sensor names",
           "enable_accurate_realtime_power_data": "Enable accurate realtime power data",
           "enable_mqtt_debug": "Enable MQTT debugging"
         },
         "title": "SAJ R5 solar inverter options"
+      }
+    }
+  },
+  "entity": {
+    "number": {
+      "power_limit": {
+        "name": "Power limit"
       }
     }
   }

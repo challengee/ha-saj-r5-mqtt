@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from struct import unpack_from
 
 import voluptuous as vol
@@ -23,6 +24,7 @@ from .const import (
     LOGGER,
     SERVICE_READ_REGISTER,
     SERVICE_REFRESH_INVERTER_DATA,
+    SERVICE_SET_INVERTER_TIME,
     SERVICE_WRITE_REGISTER,
 )
 from .types import SajR5MqttConfigEntry
@@ -150,12 +152,58 @@ def async_register_services(hass: HomeAssistant) -> None:
             ),
         )
 
+    async def set_inverter_time(call: ServiceCall) -> None:
+        """Set the inverter time to current system time or specified time."""
+        entry = _get_config_entry(hass, call.data.get(ATTR_CONFIG_ENTRY, None))
+        mqtt_client = entry.runtime_data.mqtt_client
+
+        # Use current time as default
+        date_time = datetime.now()
+
+        # Pack the time into 4 registers as per SAJ R5 documentation
+        # Register 0x8020: year
+        # Register 0x8021: (month << 8) + day
+        # Register 0x8022: (hour << 8) + minute
+        # Register 0x8023: (second << 8) + 0
+        values = [
+            date_time.year,
+            (date_time.month << 8) + date_time.day,
+            (date_time.hour << 8) + date_time.minute,
+            (date_time.second << 8),
+        ]
+
+        LOGGER.info(f"Setting inverter time to: {date_time}")
+
+        # Write all 4 registers sequentially
+        for i, value in enumerate(values):
+            register = 0x8020 + i
+            result = await mqtt_client.write_register(register, value)
+            if result is None:
+                LOGGER.error(f"Failed to write time register {hex(register)}")
+                raise ServiceValidationError(
+                    f"Failed to set inverter time at register {hex(register)}"
+                )
+
+        LOGGER.info(f"Successfully set inverter time to: {date_time}")
+
+    if not hass.services.has_service(DOMAIN, SERVICE_SET_INVERTER_TIME):
+        LOGGER.debug(f"Registering service: {SERVICE_SET_INVERTER_TIME}")
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SET_INVERTER_TIME,
+            set_inverter_time,
+            schema=vol.Schema(
+                vol.All({vol.Optional(ATTR_CONFIG_ENTRY): ConfigEntrySelector()})
+            ),
+        )
+
 
 def async_remove_services(hass: HomeAssistant) -> None:
     """Remove all services."""
     hass.services.async_remove(DOMAIN, SERVICE_READ_REGISTER)
     hass.services.async_remove(DOMAIN, SERVICE_WRITE_REGISTER)
     hass.services.async_remove(DOMAIN, SERVICE_REFRESH_INVERTER_DATA)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_INVERTER_TIME)
 
 
 def _get_config_entry(

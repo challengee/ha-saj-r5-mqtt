@@ -71,9 +71,9 @@ refresh_inverter_data:
         config_entry:
           integration: saj_r5_mqtt
 
-# Refresh the config data sensors
-refresh_config_data:
-  description: Refresh the config data sensors
+# Set the inverter time to current system time
+set_inverter_time:
+  description: Set the inverter time to the current system time
   fields:
     config_entry:
       name: Device

@@ -30,6 +30,7 @@ CONF_ENABLE_MQTT_DEBUG = "enable_mqtt_debug"
 SERVICE_READ_REGISTER = "read_register"
 SERVICE_WRITE_REGISTER = "write_register"
 SERVICE_REFRESH_INVERTER_DATA = "refresh_inverter_data"
+SERVICE_SET_INVERTER_TIME = "set_inverter_time"
 
 # Attribute constants
 ATTR_CONFIG_ENTRY = "config_entry"
