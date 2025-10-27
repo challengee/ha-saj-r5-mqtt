@@ -17,6 +17,11 @@ from homeassistant.exceptions import HomeAssistantError
 from .const import (
     LOGGER,
     MODBUS_DEVICE_ADDRESS,
+    MODBUS_EXCEPTION_FLAG,
+    MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS,
+    MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE,
+    MODBUS_EXCEPTION_ILLEGAL_FUNCTION,
+    MODBUS_EXCEPTION_SLAVE_DEVICE_FAILURE,
     MODBUS_MAX_REGISTERS_PER_QUERY,
     MODBUS_READ_REQUEST,
     MODBUS_WRITE_REQUEST,
@@ -270,6 +275,12 @@ class SajR5MqttClient:
         debug(f"Length: {length} bytes", self.debug_mqtt)
         debug(f"Timestamp: {date}", self.debug_mqtt)
 
+        # Check if this is a Modbus exception response
+        if req_type & MODBUS_EXCEPTION_FLAG:
+            self._parse_exception_packet(packet, req_type)
+            # _parse_exception_packet raises an exception, so we never reach here
+            raise ValueError(f"Unexpected exception handling error")
+
         if req_type == MODBUS_READ_REQUEST:
             content = self._parse_read_packet(packet)
         elif req_type == MODBUS_WRITE_REQUEST:
@@ -340,6 +351,40 @@ class SajR5MqttClient:
             raise ValueError("Invalid CRC: expected {calc_crc}, received {crc16}")
 
         return value
+
+    def _parse_exception_packet(self, packet, req_type: int) -> None:
+        """Parse a Modbus exception packet and raise an appropriate error.
+
+        Modbus exception packet consists of [EXCEPTION_CODE][CRC]:
+        - [EXCEPTION_CODE] indicates the type of error
+        - [CRC] checksum
+        """
+        # Get the exception code (1 byte at offset 0xA)
+        (exception_code,) = unpack_from(">B", packet, 0xA)
+
+        # Get the original function code (strip the exception flag)
+        function_code = req_type & ~MODBUS_EXCEPTION_FLAG
+
+        # Map exception codes to human-readable messages
+        exception_messages = {
+            MODBUS_EXCEPTION_ILLEGAL_FUNCTION: "Illegal function code",
+            MODBUS_EXCEPTION_ILLEGAL_DATA_ADDRESS: "Illegal data address (register not available)",
+            MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE: "Illegal data value",
+            MODBUS_EXCEPTION_SLAVE_DEVICE_FAILURE: "Slave device failure",
+        }
+
+        exception_msg = exception_messages.get(
+            exception_code, f"Unknown exception code {log_hex(exception_code)}"
+        )
+
+        debug(
+            f"Modbus exception: function code {log_hex(function_code)}, exception code {log_hex(exception_code)} - {exception_msg}",
+            self.debug_mqtt,
+        )
+
+        raise ValueError(
+            f"Modbus exception for function code {log_hex(function_code)}: {exception_msg} (code: {log_hex(exception_code)})"
+        )
 
     def _create_mqtt_read_packet(self, start: int, count: int) -> tuple[bytes, int]:
         """Create a mqtt read packet.
